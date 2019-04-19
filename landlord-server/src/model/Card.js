@@ -1,5 +1,4 @@
-// 卡牌信息
-var Card = function (){
+var Card = function () { // 卡牌信息
     this.data = [
         {icon: 'j1.jpg', type: '0', val: 17},
         {icon: 'j2.jpg', type: '0', val: 16},
@@ -57,8 +56,9 @@ var Card = function (){
         {icon: 'k13.jpg', type: '4', val: 13}
     ];
 };
-//拷贝牌组，返回一组新的牌组
-Card.prototype.getNewCards = function () {
+
+Card.prototype.getNewCards = function () { // 拷贝牌组，返回一组新的牌组
     return this.data.slice(0);
 };
+
 module.exports = Card;

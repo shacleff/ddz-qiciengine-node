@@ -1,34 +1,23 @@
-var util = require('../util/Util.js'),
-    offline = require('../mgr/OfflinePlayerMgr.js'),
-    playerScoreDao = require('../dao/PlayerScoreDao.js');
+var util = require('../util/Util.js');
+var offline = require('../mgr/OfflinePlayerMgr.js');
+var playerScoreDao = require('../dao/PlayerScoreDao.js');
 
-var Desk = function(no){
-    //桌号
-    this.deskNo = no;
-    //当前叫分最高
-    this.currentScore = 0;
-    //倍数
-    this.rate = 1;
-    //当前叫分次数
-    this.robRound = 0;
-    //底牌
-    this.hiddenCards = [];
-    //当前地主座位号
-    this.landlordSeatNo = null;
-    // winCard 牌型信息
-    this.winCard = null;
-    // 本轮当前赢牌的玩家
-    this.roundWinSeatNo = null;
-    //当前出牌玩家座位号
-    this.currentPlaySeatNo = null;
-    //座位
-    this.seats = {
+var Desk = function (no) {
+    this.deskNo = no; //桌号
+    this.currentScore = 0; //当前叫分最高
+    this.rate = 1; //倍数
+    this.robRound = 0; // 当前叫分次数
+    this.hiddenCards = []; // 底牌
+    this.landlordSeatNo = null; // 当前地主座位号
+    this.winCard = null; // winCard 牌型信息
+    this.roundWinSeatNo = null; // 本轮当前赢牌的玩家
+    this.currentPlaySeatNo = null; // 当前出牌玩家座位号
+    this.seats = { // 座位
         'p1': null,
         'p2': null,
         'p3': null
     };
-    //当前状态 1： 等待准备 2：抢地主 3:出牌
-    this.status = 1;
+    this.status = 1; // 当前状态 1： 等待准备 2：抢地主 3:出牌
 };
 
 /**
@@ -36,28 +25,30 @@ var Desk = function(no){
  * @method gameover
  * @param  {String}   seatNo 胜利者座位号
  */
-Desk.prototype.gameover = function (seatNo, lastCards){
+Desk.prototype.gameover = function (seatNo, lastCards) {
     var self = this;
-    //计算分数
-    for (var p in self.seats) {
-        if(self.seats[p].status != util.PLAYER_STATUS_NORMAL){
+
+    for (var p in self.seats) { // 计算分数
+        if (self.seats[p].status != util.PLAYER_STATUS_NORMAL) {
             self.seats[p].score -= self.currentScore * self.rate * (p === self.landlordSeatNo ? 6 : 3);
             continue;
         }
-        if(self.landlordSeatNo === seatNo){//地主获胜
-            if (p === seatNo) {//地主获取双倍分
+
+        if (self.landlordSeatNo === seatNo) { // 地主获胜
+            if (p === seatNo) { //地主获取双倍分
                 self.seats[p].score += self.currentScore * self.rate * 2;
-            } else {//农民扣分
+            } else { //农民扣分
                 self.seats[p].score -= self.currentScore * self.rate;
             }
-        } else {//地主输了
-            if (p === self.landlordSeatNo) {//地主扣双倍分
+        } else { //地主输了
+            if (p === self.landlordSeatNo) { //地主扣双倍分
                 self.seats[p].score -= self.currentScore * self.rate * 2;
-            } else {//农民扣分
+            } else { //农民扣分
                 self.seats[p].score += self.currentScore * self.rate;
             }
         }
     }
+
     //所有玩家都回复未准备状态并更新数据库的积分
     for (var p in self.seats) {
         if (self.seats[p]) {
@@ -65,44 +56,41 @@ Desk.prototype.gameover = function (seatNo, lastCards){
         }
         playerScoreDao.updateScore(self.seats[p].uid, self.seats[p].score);
     }
+
     self.status = util.DESK_STATUS_READY;
+
     //返回数据
     var data = {
-            'winnerSeatNo': seatNo,
-            'landlordSeatNo': self.landlordSeatNo,
-            'seats': self.seats,
-            'currentScore': self.currentScore,
-            'lastCards': lastCards,
-            'rate': self.rate
+        'winnerSeatNo': seatNo,
+        'landlordSeatNo': self.landlordSeatNo,
+        'seats': self.seats,
+        'currentScore': self.currentScore,
+        'lastCards': lastCards,
+        'rate': self.rate
     };
+
     return data;
 };
-//游戏结束后清除已经离开的玩家
-Desk.prototype.afterGameover = function(){
+
+Desk.prototype.afterGameover = function () { // 游戏结束后清除已经离开的玩家
     var self = this;
     for (var p in self.seats) {
-        if(self.seats[p].status != util.PLAYER_STATUS_NORMAL){
+        if (self.seats[p].status != util.PLAYER_STATUS_NORMAL) {
             offline.remove(self.seats[p].uid);
             self.seats[p] = null;
         }
     }
 };
 
-//重置
-Desk.prototype.reset = function(){
+Desk.prototype.reset = function () { // 重置
     this.currentScore = 0;
-    //当前叫分次数
-    this.robRound = 0;
-    //当前地主座位号
-    this.landlordSeatNo = null;
-    // winCard 牌型信息
-    this.winCard = null;
-    // 本轮当前赢牌的玩家
-    this.roundWinSeatNo = null;
-    //倍数
-    this.rate = 1;
-     for (var p in this.seats) {
-         if (this.seats[p]) {
+    this.robRound = 0; // 当前叫分次数
+    this.landlordSeatNo = null; // 当前地主座位号
+    this.winCard = null; // winCard 牌型信息
+    this.roundWinSeatNo = null; // 本轮当前赢牌的玩家
+    this.rate = 1; // 倍数
+    for (var p in this.seats) {
+        if (this.seats[p]) {
             this.seats[p].isReady = false;
             this.seats[p].isLandlord = false;
         }
@@ -112,9 +100,9 @@ Desk.prototype.reset = function(){
  * 设置本轮地主
  * @method setLandlord
  */
-Desk.prototype.setLandlord = function (){
-    var self = this,
-        seatNo = self.landlordSeatNo;
+Desk.prototype.setLandlord = function () {
+    var self = this;
+    var seatNo = self.landlordSeatNo;
     self.status = util.DESK_STATUS_PLAY;
     self.currentPlaySeatNo = seatNo;
     self.seats[seatNo].isLandlord = true;
@@ -124,14 +112,14 @@ Desk.prototype.setLandlord = function (){
     self.seats['p3'].cardList.sort(util.cardSort);
 };
 
-Desk.prototype.setCardsCnt = function(player){
-    if(player.seatNo === 'p1'){
+Desk.prototype.setCardsCnt = function (player) {
+    if (player.seatNo === 'p1') {
         player.preCardsCnt = this.seats.p3.cardList.length;
         player.nextCardsCnt = this.seats.p2.cardList.length;
-    } else if(player.seatNo === 'p2'){
+    } else if (player.seatNo === 'p2') {
         player.preCardsCnt = this.seats.p1.cardList.length;
         player.nextCardsCnt = this.seats.p3.cardList.length;
-    } else if(player.seatNo === 'p3'){
+    } else if (player.seatNo === 'p3') {
         player.preCardsCnt = this.seats.p2.cardList.length;
         player.nextCardsCnt = this.seats.p1.cardList.length;
     }
@@ -142,8 +130,8 @@ Desk.prototype.setCardsCnt = function(player){
  * @method function
  * @return {Boolean}
  */
-Desk.prototype.isAllReady = function(){
-    if(this.size() === 3){
+Desk.prototype.isAllReady = function () {
+    if (this.size() === 3) {
         return this.seats.p1.isReady && this.seats.p2.isReady && this.seats.p3.isReady;
     } else {
         return false;
@@ -151,33 +139,33 @@ Desk.prototype.isAllReady = function(){
 };
 
 //返回本桌人数
-Desk.prototype.size = function(){
+Desk.prototype.size = function () {
     var total = 0;
     for (var p in this.seats) {
-        if(this.seats[p]){
-            total ++;
+        if (this.seats[p]) {
+            total++;
         }
     }
     return total;
 };
 
 //返回本桌在线人数
-Desk.prototype.onlineSize = function(){
+Desk.prototype.onlineSize = function () {
     var total = 0;
     for (var p in this.seats) {
-        if(this.seats[p] && this.seats[p].status === util.PLAYER_STATUS_NORMAL){
-            total ++;
+        if (this.seats[p] && this.seats[p].status === util.PLAYER_STATUS_NORMAL) {
+            total++;
         }
     }
     return total;
 };
 
 //在删除本桌之前执行
-Desk.prototype.onDestroy = function (player){
+Desk.prototype.onDestroy = function (player) {
     var self = this;
-    for(var p in self.seats){
+    for (var p in self.seats) {
         offline.remove(self.seats[p].uid);
-        if(self.seats[p].timer){
+        if (self.seats[p].timer) {
             clearTimeout(self.seats[p].timer);
         }
     }
@@ -189,11 +177,11 @@ Desk.prototype.onDestroy = function (player){
  * @param  {[type]}   player [description]
  * @return {[type]}          [description]
  */
-Desk.prototype.playerExit = function (player){
+Desk.prototype.playerExit = function (player) {
     var self = this;
-	if(self.deskNo === player.deskNo){
-		console.log(self.deskNo, '桌', player.seatNo, self.seats[player.seatNo].name, '退出了游戏');
-		if(self.status === util.DESK_STATUS_ROB){//正在进行抢地主退出，需要扣分
+    if (self.deskNo === player.deskNo) {
+        console.log(self.deskNo, '桌', player.seatNo, self.seats[player.seatNo].name, '退出了游戏');
+        if (self.status === util.DESK_STATUS_ROB) {//正在进行抢地主退出，需要扣分
             //扣分
             player = self.seats[player.seatNo];
             playerScoreDao.updateScore(player.uid, player.score - 10);
@@ -204,7 +192,7 @@ Desk.prototype.playerExit = function (player){
                 'seats': self.copySeats(),
                 'status': util.DESK_STATUS_ROB
             }
-		} else if(self.status === util.DESK_STATUS_PLAY){//正在进行玩牌退出，需要扣分,当前计分的4倍
+        } else if (self.status === util.DESK_STATUS_PLAY) {//正在进行玩牌退出，需要扣分,当前计分的4倍
             //扣分
             // player = self.seats[player.seatNo];
             // var score = player.score - self.currentScore * self.rate * 4;
@@ -217,22 +205,22 @@ Desk.prototype.playerExit = function (player){
                 'status': util.DESK_STATUS_PLAY,
                 'exitSeatNo': player.seatNo
             }
-		} else {
+        } else {
             self.seats[player.seatNo] = null;
         }
-	}
-	return null;
+    }
+    return null;
 };
 
 //复制座位信息
-Desk.prototype.copySeats = function (){
+Desk.prototype.copySeats = function () {
     var self = this,
         dest = {};
-    for(var p in self.seats){
-        if(self.seats[p]){
+    for (var p in self.seats) {
+        if (self.seats[p]) {
             dest[p] = {};
-            for(var pro in self.seats[p]){
-                if(typeof self.seats[p][pro] === 'number' || typeof self.seats[p][pro] === 'string'){
+            for (var pro in self.seats[p]) {
+                if (typeof self.seats[p][pro] === 'number' || typeof self.seats[p][pro] === 'string') {
                     dest[p][pro] = self.seats[p][pro];
                 }
             }
