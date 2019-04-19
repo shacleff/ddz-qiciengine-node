@@ -1,10 +1,7 @@
 var gameRule = require('./GameRule.js');
 var AICardType = require('./AICardType.js');
-/**
- * AI逻辑
- *
- */
-var AILogic = function (p){
+
+var AILogic = function (p) { // AI逻辑
     this.player = p;
     this.cards = p.cardList.slice(0);
     this.analyse();
@@ -17,80 +14,87 @@ var AILogic = function (p){
  * @param  {boolean} isWinnerIsLandlord 当前最大是否是地主
  * @return {number} winnerCardCount 当前最大那家剩余手牌数
  */
-AILogic.prototype.follow = function(winc, isWinnerIsLandlord, winnerCardCount) {
+AILogic.prototype.follow = function (winc, isWinnerIsLandlord, winnerCardCount) {
     var self = this;
-    // self.log();
-    var result = (function(){
-        switch (winc.cardKind) {//判断牌型
-            case gameRule.ONE://单牌
+
+    var result = (function () {
+        switch (winc.cardKind) { // 判断牌型
+            case gameRule.ONE: // 单牌
                 var one = self.matchCards(self._one, gameRule.ONE, winc, isWinnerIsLandlord, winnerCardCount);
-                if(!one){
-                    if(isWinnerIsLandlord || self.player.isLandlord){
+                if (!one) {
+                    if (isWinnerIsLandlord || self.player.isLandlord) {
                         for (var i = 0; i < self.cards.length; i++) {
-                            if(self.cards[i].val <= 15 && self.cards[i].val > winc.val){
-                                return {cardList: self.cards.slice(i, i + 1),
+                            if (self.cards[i].val <= 15 && self.cards[i].val > winc.val) {
+                                return {
+                                    cardList: self.cards.slice(i, i + 1),
                                     cardKind: gameRule.ONE,
                                     size: 1,
-                                    val: self.cards[i].val};
+                                    val: self.cards[i].val
+                                };
                             }
                         }
                     }
-                    if(self.times <= 1 && self._pairs.length > 0 && self._pairs[0].val > 10){//剩下一对大于10拆牌
+                    if (self.times <= 1 && self._pairs.length > 0 && self._pairs[0].val > 10) { // 剩下一对大于10拆牌
                         var c = self.cards.slice(0, 1);
-                        if(c[0].val > winc.val){
-                            return {cardList: c,
+                        if (c[0].val > winc.val) {
+                            return {
+                                cardList: c,
                                 cardKind: gameRule.ONE,
                                 size: 1,
-                                val: c[0].val};
+                                val: c[0].val
+                            };
                         } else {
                             return null;
                         }
                     }
                 }
                 return one;
-            case gameRule.PAIRS://对子
-                var pairs =  self._pairs.length > 0 ? self.matchCards(self._pairs, gameRule.PAIRS, winc, isWinnerIsLandlord, winnerCardCount) : null;
-                if(pairs == null && (isWinnerIsLandlord || self.player.isLandlord)){//对手需要拆牌大之
-                    //从连对中拿对
-                    if(self._progressionPairs.length > 0){
-                        for (var i = self._progressionPairs.length - 1; i >= 0 ; i--) {
-                            if(winc.val >= self._progressionPairs[i].val) continue;
-                            for (var j =  self._progressionPairs[i].cardList.length - 1 ; j >= 0; j -= 2) {
-                                if(self._progressionPairs[i].cardList[j].val > winc.val){
-                                    var pairsFromPP = self._progressionPairs[i].cardList.splice(j - 1,2);
-                                    return {cardList: pairsFromPP,
-                                            cardKind: gameRule.PAIRS,
-                                            size: 2,
-                                            val: pairsFromPP[0].val};
+            case gameRule.PAIRS: // 对子
+                var pairs = self._pairs.length > 0 ? self.matchCards(self._pairs, gameRule.PAIRS, winc, isWinnerIsLandlord, winnerCardCount) : null;
+                if (pairs == null && (isWinnerIsLandlord || self.player.isLandlord)) { // 对手需要拆牌大之
+                    if (self._progressionPairs.length > 0) { // 从连对中拿对
+                        for (var i = self._progressionPairs.length - 1; i >= 0; i--) {
+                            if (winc.val >= self._progressionPairs[i].val) continue;
+                            for (var j = self._progressionPairs[i].cardList.length - 1; j >= 0; j -= 2) {
+                                if (self._progressionPairs[i].cardList[j].val > winc.val) {
+                                    var pairsFromPP = self._progressionPairs[i].cardList.splice(j - 1, 2);
+                                    return {
+                                        cardList: pairsFromPP,
+                                        cardKind: gameRule.PAIRS,
+                                        size: 2,
+                                        val: pairsFromPP[0].val
+                                    };
                                 }
                             }
                         }
-                    } else if(self._three.length > 0){
-                        for (var i = self._three.length - 1; i >= 0 ; i--) {
-                            if(self._three[i].val > winc.val){
-                                return {cardList: self._three[i].cardList.slice(0, 2),
-                                        cardKind: gameRule.PAIRS,
-                                        size: 2,
-                                        val: self._three[i].val};
+                    } else if (self._three.length > 0) {
+                        for (var i = self._three.length - 1; i >= 0; i--) {
+                            if (self._three[i].val > winc.val) {
+                                return {
+                                    cardList: self._three[i].cardList.slice(0, 2),
+                                    cardKind: gameRule.PAIRS,
+                                    size: 2,
+                                    val: self._three[i].val
+                                };
                             }
                         }
                     }
                 }
                 return pairs;
-            case gameRule.THREE://三根
-                if(!isWinnerIsLandlord && !self.player.isLandlord){
+            case gameRule.THREE: // 三根
+                if (!isWinnerIsLandlord && !self.player.isLandlord) {
                     return null;
                 }
                 return self.matchCards(self._three, gameRule.THREE, winc, isWinnerIsLandlord, winnerCardCount);
 
-            case gameRule.THREE_WITH_ONE://三带一
-                if(!isWinnerIsLandlord && !self.player.isLandlord){
+            case gameRule.THREE_WITH_ONE: // 三带一
+                if (!isWinnerIsLandlord && !self.player.isLandlord) {
                     return null;
                 }
                 var three = self.minCards(self._three, gameRule.THREE, winc.val);
-                if(three){
+                if (three) {
                     var one = self.minOne(2, three.val);
-                    if(!one){
+                    if (!one) {
                         return null;
                     } else {
                         three.cardList.push(one);
@@ -100,21 +104,21 @@ AILogic.prototype.follow = function(winc, isWinnerIsLandlord, winnerCardCount) {
                 }
                 return three;
 
-            case gameRule.THREE_WITH_PAIRS: //三带一对
-                if(!isWinnerIsLandlord && !self.player.isLandlord){
+            case gameRule.THREE_WITH_PAIRS: // 三带一对
+                if (!isWinnerIsLandlord && !self.player.isLandlord) {
                     return null;
                 }
                 var three = self.minCards(self._three, gameRule.THREE, winc.val);
-                if(three){
+                if (three) {
                     var pairs = self.minCards(self._pairs, gameRule.PAIRS);
-                    while (true) {//避免对子三根重叠
-                        if(pairs.cardList[0].val === three.val){
+                    while (true) { // 避免对子三根重叠
+                        if (pairs.cardList[0].val === three.val) {
                             pairs = self.minCards(self._pairs, gameRule.PAIRS, pairs.cardList[0].val);
                         } else {
                             break;
                         }
                     }
-                    if(pairs){
+                    if (pairs) {
                         three.cardList = three.cardList.concat(pairs.cardList);
                     } else {
                         return null;
@@ -122,23 +126,23 @@ AILogic.prototype.follow = function(winc, isWinnerIsLandlord, winnerCardCount) {
                 }
                 return three;
 
-            case gameRule.PROGRESSION://顺子
-                if(!isWinnerIsLandlord && !self.player.isLandlord){
+            case gameRule.PROGRESSION: // 顺子
+                if (!isWinnerIsLandlord && !self.player.isLandlord) {
                     return null;
                 }
-                if(self._progression.length > 0){
-                    for (var i = self._progression.length - 1; i >= 0 ; i--) {//从小值开始判断
-                        if(winc.val < self._progression[i].val && winc.size <= self._progression[i].cardList.length){
-                            if(winc.size === self._progression[i].cardList.length){
+                if (self._progression.length > 0) {
+                    for (var i = self._progression.length - 1; i >= 0; i--) {//从小值开始判断
+                        if (winc.val < self._progression[i].val && winc.size <= self._progression[i].cardList.length) {
+                            if (winc.size === self._progression[i].cardList.length) {
                                 return self.setCardKind(self._progression[i], gameRule.PROGRESSION);
                             } else {
-                                if(self.player.isLandlord || isWinnerIsLandlord){
+                                if (self.player.isLandlord || isWinnerIsLandlord) {
                                     var valDiff = self._progression[i].val - winc.val,
                                         sizeDiff = self._progression[i].cardList.length - winc.size;
                                     for (var j = 0; j < sizeDiff; j++) {//拆顺
-                                        if(valDiff > 1){
+                                        if (valDiff > 1) {
                                             self._progression[i].cardList.shift();
-                                            valDiff -- ;
+                                            valDiff--;
                                             continue;
                                         }
                                         self._progression[i].cardList.pop();
@@ -153,24 +157,24 @@ AILogic.prototype.follow = function(winc, isWinnerIsLandlord, winnerCardCount) {
                 }
                 return null;
 
-            case gameRule.PROGRESSION_PAIRS://连对
-                if(!isWinnerIsLandlord && !self.player.isLandlord){
+            case gameRule.PROGRESSION_PAIRS: // 连对
+                if (!isWinnerIsLandlord && !self.player.isLandlord) {
                     return null;
                 }
-                if(self._progressionPairs.length > 0){
-                    for (var i = self._progressionPairs.length - 1; i >= 0 ; i--) {//从小值开始判断
-                        if(winc.val < self._progressionPairs[i].val && winc.size <= self._progressionPairs[i].cardList.length){
-                            if(winc.size === self._progressionPairs[i].cardList.length){
+                if (self._progressionPairs.length > 0) {
+                    for (var i = self._progressionPairs.length - 1; i >= 0; i--) {//从小值开始判断
+                        if (winc.val < self._progressionPairs[i].val && winc.size <= self._progressionPairs[i].cardList.length) {
+                            if (winc.size === self._progressionPairs[i].cardList.length) {
                                 return self.setCardKind(self._progressionPairs[i], gameRule.PROGRESSION_PAIRS);
                             } else {
-                                if(self.player.isLandlord || isWinnerIsLandlord){
+                                if (self.player.isLandlord || isWinnerIsLandlord) {
                                     var valDiff = self._progressionPairs[i].val - winc.val,
                                         sizeDiff = (self._progressionPairs[i].cardList.length - winc.size) / 2;
                                     for (var j = 0; j < sizeDiff; j++) {//拆顺
-                                        if(valDiff > 1){
+                                        if (valDiff > 1) {
                                             self._progressionPairs[i].cardList.shift();
                                             self._progressionPairs[i].cardList.shift();
-                                            valDiff -- ;
+                                            valDiff--;
                                             continue;
                                         }
                                         self._progressionPairs[i].cardList.pop();
@@ -186,22 +190,22 @@ AILogic.prototype.follow = function(winc, isWinnerIsLandlord, winnerCardCount) {
                 }
                 return null;
 
-            case gameRule.PLANE://三顺
-                if(!isWinnerIsLandlord && !self.player.isLandlord){
+            case gameRule.PLANE: // 三顺
+                if (!isWinnerIsLandlord && !self.player.isLandlord) {
                     return null;
                 }
                 return self.minPlane(winc.size, winc);
-            case gameRule.PLANE_WITH_ONE: //飞机带单
-                if(!isWinnerIsLandlord && !self.player.isLandlord){
+            case gameRule.PLANE_WITH_ONE: // 飞机带单
+                if (!isWinnerIsLandlord && !self.player.isLandlord) {
                     return null;
                 }
                 var cnt = winc.size / 4,
                     plane = self.minPlane(cnt * 3, winc);
-                if(plane){
+                if (plane) {
                     var currOneVal = 2;
                     for (var i = 0; i < cnt; i++) {
                         var one = self.minOne(currOneVal, plane.val);//拿一张单牌
-                        if(one){
+                        if (one) {
                             plane.cardList.push(one);
                             currOneVal = one.val;
                         } else {
@@ -212,17 +216,17 @@ AILogic.prototype.follow = function(winc, isWinnerIsLandlord, winnerCardCount) {
                     plane.size = plane.cardList.length;
                 }
                 return plane;
-            case gameRule.PLANE_WITH_PAIRS://飞机带对
-                if(!isWinnerIsLandlord && !self.player.isLandlord){
+            case gameRule.PLANE_WITH_PAIRS: // 飞机带对
+                if (!isWinnerIsLandlord && !self.player.isLandlord) {
                     return null;
                 }
                 var cnt = winc.size / 5,
                     plane = self.minPlane(cnt * 3, winc);
-                if(plane){
+                if (plane) {
                     var currPairsVal = 2;
                     for (var i = 0; i < cnt; i++) {
                         var pairs = self.minCards(self._pairs, gameRule.PAIRS, currPairsVal);//拿一对
-                        if(pairs){
+                        if (pairs) {
                             plane.cardList = plane.cardList.concat(pairs.cardList);
                             currPairsVal = pairs.val;
                         } else {
@@ -234,17 +238,17 @@ AILogic.prototype.follow = function(winc, isWinnerIsLandlord, winnerCardCount) {
                 }
                 return plane;
 
-            case gameRule.BOMB://炸弹
-                if(!isWinnerIsLandlord && !self.player.isLandlord){//同是农民不压炸弹
+            case gameRule.BOMB: // 炸弹
+                if (!isWinnerIsLandlord && !self.player.isLandlord) {//同是农民不压炸弹
                     return null;
                 }
                 var bomb = self.minCards(self._bomb, gameRule.BOMB, winc.val);
-                if(bomb){
+                if (bomb) {
                     return bomb;
                 } else {
-                    if(self._kingBomb.length > 0){
-                        if((isWinnerIsLandlord && winnerCardCount < 6)
-                            || (self.player.isLandlord && self.player.cardList.length < 6)){
+                    if (self._kingBomb.length > 0) {
+                        if ((isWinnerIsLandlord && winnerCardCount < 6)
+                            || (self.player.isLandlord && self.player.cardList.length < 6)) {
                             return self.setCardKind(self._kingBomb[0], gameRule.KING_BOMB);
                         }
                     }
@@ -262,14 +266,14 @@ AILogic.prototype.follow = function(winc, isWinnerIsLandlord, winnerCardCount) {
     })();
 
     //如果有炸弹，根据牌数量确定是否出
-    if(result){
+    if (result) {
         return result;
-    } else if(winc.cardKind != gameRule.BOMB && winc.cardKind != gameRule.KING_BOMB
-        && (self._bomb.length > 0 || self._kingBomb.length > 0)){
-        if((isWinnerIsLandlord && winnerCardCount < 5)
+    } else if (winc.cardKind != gameRule.BOMB && winc.cardKind != gameRule.KING_BOMB
+        && (self._bomb.length > 0 || self._kingBomb.length > 0)) {
+        if ((isWinnerIsLandlord && winnerCardCount < 5)
             || (self.player.isLandlord && (self.player.cardList.length < 5 || (self.player.nextCardsCnt < 5 || self.player.preCardsCnt < 6)))
-            || self.times() <= 2){//自己只有两手牌或只有炸弹必出炸弹
-            if(self._bomb.length > 0){
+            || self.times() <= 2) {//自己只有两手牌或只有炸弹必出炸弹
+            if (self._bomb.length > 0) {
                 return self.minCards(self._bomb, gameRule.BOMB);
             } else {
                 return self.setCardKind(self._kingBomb[0], gameRule.KING_BOMB);
@@ -285,39 +289,39 @@ AILogic.prototype.follow = function(winc, isWinnerIsLandlord, winnerCardCount) {
  * @method function
  * @return {array} [description]
  */
-AILogic.prototype.play = function(landlordCardsCnt) {
+AILogic.prototype.play = function (landlordCardsCnt) {
     var self = this;
     // self.log();
-    var cardsWithMin = function (idx){
+    var cardsWithMin = function (idx) {
         var minCard = self.cards[idx];
         //在单根里找
         for (var i = 0; i < self._one.length; i++) {
-            if(self._one[i].val === minCard.val){
+            if (self._one[i].val === minCard.val) {
                 return self.minCards(self._one, gameRule.ONE);
             }
         }
         //对子里找
         for (i = 0; i < self._pairs.length; i++) {
-            if(self._pairs[i].val === minCard.val){
+            if (self._pairs[i].val === minCard.val) {
                 return self.minCards(self._pairs, gameRule.PAIRS);
             }
         }
         //三根里找
         for (i = 0; i < self._three.length; i++) {
-            if(self._three[i].val === minCard.val){
+            if (self._three[i].val === minCard.val) {
                 return self.minCards(self._three, gameRule.THREE);
             }
         }
         //炸弹里找
         for (i = 0; i < self._bomb.length; i++) {
-            if(self._bomb[i].val === minCard.val){
+            if (self._bomb[i].val === minCard.val) {
                 return self.minCards(self._bomb, gameRule.BOMB);
             }
         }
         //三顺里找
         for (i = 0; i < self._plane.length; i++) {
             for (var j = 0; j < self._plane[i].cardList.length; j++) {
-                if(self._plane[i].cardList[j].val === minCard.val && self._plane[i].cardList[j].type === minCard.type ){
+                if (self._plane[i].cardList[j].val === minCard.val && self._plane[i].cardList[j].type === minCard.type) {
                     return self.minCards(self._plane, gameRule.PLANE);
                 }
             }
@@ -325,7 +329,7 @@ AILogic.prototype.play = function(landlordCardsCnt) {
         //顺子里找
         for (i = 0; i < self._progression.length; i++) {
             for (var j = 0; j < self._progression[i].cardList.length; j++) {
-                if(self._progression[i].cardList[j].val === minCard.val && self._progression[i].cardList[j].type === minCard.type ){
+                if (self._progression[i].cardList[j].val === minCard.val && self._progression[i].cardList[j].type === minCard.type) {
                     return self.minCards(self._progression, gameRule.PROGRESSION);
                 }
             }
@@ -333,19 +337,19 @@ AILogic.prototype.play = function(landlordCardsCnt) {
         //连对里找
         for (i = 0; i < self._progressionPairs.length; i++) {
             for (var j = 0; j < self._progressionPairs[i].cardList.length; j++) {
-                if(self._progressionPairs[i].cardList[j].val === minCard.val && self._progressionPairs[i].cardList[j].type === minCard.type ){
+                if (self._progressionPairs[i].cardList[j].val === minCard.val && self._progressionPairs[i].cardList[j].type === minCard.type) {
                     return self.minCards(self._progressionPairs, gameRule.PROGRESSION_PAIRS);
                 }
             }
         }
-        if(self._kingBomb.length > 0){
+        if (self._kingBomb.length > 0) {
             return self.minCards(self._kingBomb, gameRule.KING_BOMB);
         }
     };
-    for (var i = self.cards.length - 1; i >=0 ; i--) {
+    for (var i = self.cards.length - 1; i >= 0; i--) {
         var r = cardsWithMin(i);
-        if(r.cardKind === gameRule.ONE){
-            if(self._plane.length > 0){//三顺
+        if (r.cardKind === gameRule.ONE) {
+            if (self._plane.length > 0) {//三顺
                 var plane = self.minCards(self._plane, gameRule.PLANE);
                 var len = plane.cardList.length / 3;
                 var currOneVal = 2;
@@ -354,55 +358,54 @@ AILogic.prototype.play = function(landlordCardsCnt) {
                     plane.cardList.push(one);
                     currOneVal = one.val;
                 }
-                return self.setCardKind( plane, gameRule.PLANE_WITH_ONE);
-            }
-            else if(self._three.length > 0){//三带一
+                return self.setCardKind(plane, gameRule.PLANE_WITH_ONE);
+            } else if (self._three.length > 0) {//三带一
                 var three = self.minCards(self._three, gameRule.THREE);
                 var len = three.cardList.length / 3;
                 var one = self.minOne(currOneVal, three.val);//拿一张单牌
                 three.cardList.push(one);
-                if(three.val < 14)
-                    return self.setCardKind( three, gameRule.THREE_WITH_ONE);
+                if (three.val < 14)
+                    return self.setCardKind(three, gameRule.THREE_WITH_ONE);
             }
-            if(self.player.isLandlord){//坐庄打法
-                if(self.player.isLandlord){//坐庄打法
-                    if(self.player.nextCardsCnt <= 2 || self.player.preCardsCnt <= 2 )
+            if (self.player.isLandlord) {//坐庄打法
+                if (self.player.isLandlord) {//坐庄打法
+                    if (self.player.nextCardsCnt <= 2 || self.player.preCardsCnt <= 2)
                         return self.playOneAtTheEnd(landlordCardsCnt);
                     else
                         return self.minCards(self._one, gameRule.ONE);
                 }
             } else {//偏家打法
-                if(landlordCardsCnt <= 2)
+                if (landlordCardsCnt <= 2)
                     return self.playOneAtTheEnd(landlordCardsCnt);
                 else
                     return self.minCards(self._one, gameRule.ONE);
             }
-        } else if(r.cardKind === gameRule.THREE){
+        } else if (r.cardKind === gameRule.THREE) {
             var three = self.minCards(self._three, gameRule.THREE);
             var len = three.cardList.length / 3;
-            if(self._one.length >= 0){//单根多带单
+            if (self._one.length >= 0) {//单根多带单
                 var one = self.minOne(currOneVal, three.val);//拿一张单牌
                 three.cardList.push(one);
-                return self.setCardKind( three, gameRule.THREE_WITH_ONE);
-            } else if(self._pairs.length > 0){
+                return self.setCardKind(three, gameRule.THREE_WITH_ONE);
+            } else if (self._pairs.length > 0) {
                 var pairs = self.minCards(self._pairs, gameRule.PAIRS, currPairsVal);//拿一对
                 three.cardList = three.cardList.concat(pairs.cardList);
-                return self.setCardKind( three, gameRule.THREE_WITH_PAIRS);
+                return self.setCardKind(three, gameRule.THREE_WITH_PAIRS);
             } else {
-                return self.setCardKind( three, gameRule.THREE);
+                return self.setCardKind(three, gameRule.THREE);
             }
-        } else if(r.cardKind === gameRule.PLANE){
+        } else if (r.cardKind === gameRule.PLANE) {
             var plane = self.minCards(self._plane, gameRule.PLANE);
             var len = plane.cardList.length / 3;
-            if(self._one.length > len && self._pairs.length > len){
-                if(self._one.length >= self._pairs.length){//单根多带单
+            if (self._one.length > len && self._pairs.length > len) {
+                if (self._one.length >= self._pairs.length) {//单根多带单
                     var currOneVal = 2;
                     for (var i = 0; i < len; i++) {
                         var one = self.minOne(currOneVal, plane.val);//拿一张单牌
                         plane.cardList.push(one);
                         currOneVal = one.val;
                     }
-                    return self.setCardKind( plane, gameRule.PLANE_WITH_ONE);
+                    return self.setCardKind(plane, gameRule.PLANE_WITH_ONE);
                 } else {
                     var currPairsVal = 2;
                     for (var i = 0; i < len; i++) {
@@ -410,30 +413,30 @@ AILogic.prototype.play = function(landlordCardsCnt) {
                         plane.cardList = plane.cardList.concat(pairs.cardList);
                         currPairsVal = pairs.val;
                     }
-                    return self.setCardKind( plane, gameRule.PLANE_WITH_PAIRS);
+                    return self.setCardKind(plane, gameRule.PLANE_WITH_PAIRS);
                 }
-            } else if(self._pairs.length > len){
+            } else if (self._pairs.length > len) {
                 var currPairsVal = 2;
                 for (var i = 0; i < len; i++) {
                     var pairs = self.minCards(self._pairs, gameRule.PAIRS, currPairsVal);//拿一对
                     plane.cardList = plane.cardList.concat(pairs.cardList);
                     currPairsVal = pairs.val;
                 }
-                return self.setCardKind( plane, gameRule.PLANE_WITH_PAIRS);
-            } else if(self._one.length > len){
+                return self.setCardKind(plane, gameRule.PLANE_WITH_PAIRS);
+            } else if (self._one.length > len) {
                 var currOneVal = 2;
                 for (var i = 0; i < len; i++) {
                     var one = self.minOne(currOneVal, plane.val);//拿一张单牌
                     plane.cardList.push(one);
                     currOneVal = one.val;
                 }
-                return self.setCardKind( plane, gameRule.PLANE_WITH_ONE);
+                return self.setCardKind(plane, gameRule.PLANE_WITH_ONE);
             } else {
-                return self.setCardKind( plane, gameRule.PLANE);
+                return self.setCardKind(plane, gameRule.PLANE);
             }
-        }else if(r.cardKind === gameRule.BOMB && self.times() === 1){
+        } else if (r.cardKind === gameRule.BOMB && self.times() === 1) {
             return r;
-        } else if(r.cardKind === gameRule.BOMB && self.times() != 1){
+        } else if (r.cardKind === gameRule.BOMB && self.times() != 1) {
             continue;
         } else {
             return r;
@@ -441,23 +444,22 @@ AILogic.prototype.play = function(landlordCardsCnt) {
     }
 };
 //出牌将单根放最后出牌
-AILogic.prototype.playOneAtTheEnd  = function(landlordCardsCnt) {
+AILogic.prototype.playOneAtTheEnd = function (landlordCardsCnt) {
     var self = this;
-    if(self._progression.length > 0){//出顺子
+    if (self._progression.length > 0) {//出顺子
         return self.minCards(self._progression, gameRule.PROGRESSION);
-    }
-    else if(self._plane.length > 0){//三顺
+    } else if (self._plane.length > 0) {//三顺
         var plane = self.minCards(self._plane, gameRule.PLANE);
         var len = plane.cardList.length / 3;
-        if(self._one.length > len && self._pairs.length > len){
-            if(self._one.length >= self._pairs.length){//单根多带单
+        if (self._one.length > len && self._pairs.length > len) {
+            if (self._one.length >= self._pairs.length) {//单根多带单
                 var currOneVal = 2;
                 for (var i = 0; i < len; i++) {
                     var one = self.minOne(currOneVal, plane.val);//拿一张单牌
                     plane.cardList.push(one);
                     currOneVal = one.val;
                 }
-                return self.setCardKind( plane, gameRule.PLANE_WITH_ONE);
+                return self.setCardKind(plane, gameRule.PLANE_WITH_ONE);
             } else {
                 var currPairsVal = 2;
                 for (var i = 0; i < len; i++) {
@@ -465,68 +467,64 @@ AILogic.prototype.playOneAtTheEnd  = function(landlordCardsCnt) {
                     plane.cardList = plane.cardList.concat(pairs.cardList);
                     currPairsVal = pairs.val;
                 }
-                return self.setCardKind( plane, gameRule.PLANE_WITH_PAIRS);
+                return self.setCardKind(plane, gameRule.PLANE_WITH_PAIRS);
             }
-        } else if(self._pairs.length > len){
+        } else if (self._pairs.length > len) {
             var currPairsVal = 2;
             for (var i = 0; i < len; i++) {
                 var pairs = self.minCards(self._pairs, gameRule.PAIRS, currPairsVal);//拿一对
                 plane.cardList = plane.cardList.concat(pairs.cardList);
                 currPairsVal = pairs.val;
             }
-            return self.setCardKind( plane, gameRule.PLANE_WITH_PAIRS);
-        } else if(self._one.length > len){
+            return self.setCardKind(plane, gameRule.PLANE_WITH_PAIRS);
+        } else if (self._one.length > len) {
             var currOneVal = 2;
             for (var i = 0; i < len; i++) {
                 var one = self.minOne(currOneVal, plane.val);//拿一张单牌
                 plane.cardList.push(one);
                 currOneVal = one.val;
             }
-            return self.setCardKind( plane, gameRule.PLANE_WITH_ONE);
+            return self.setCardKind(plane, gameRule.PLANE_WITH_ONE);
         } else {
-            return self.setCardKind( plane, gameRule.PLANE);
+            return self.setCardKind(plane, gameRule.PLANE);
         }
-    }
-    else if(self._progressionPairs.length > 0){//出连对
+    } else if (self._progressionPairs.length > 0) {//出连对
         return self.minCards(self._progressionPairs, gameRule.PROGRESSION_PAIRS);
-    }
-    else if(self._three.length > 0){//三根、三带一、三带对
+    } else if (self._three.length > 0) {//三根、三带一、三带对
         var three = self.minCards(self._three, gameRule.THREE);
         var len = three.cardList.length / 3;
-        if(self._one.length >= 0){//单根多带单
+        if (self._one.length >= 0) {//单根多带单
             var one = self.minOne(currOneVal, three.val);//拿一张单牌
             three.cardList.push(one);
-            return self.setCardKind( three, gameRule.THREE_WITH_ONE);
-        } else if(self._pairs.length > 0){
+            return self.setCardKind(three, gameRule.THREE_WITH_ONE);
+        } else if (self._pairs.length > 0) {
             var pairs = self.minCards(self._pairs, gameRule.PAIRS, currPairsVal);//拿一对
             three.cardList = three.cardList.concat(pairs.cardList);
-            return self.setCardKind( three, gameRule.THREE_WITH_PAIRS);
+            return self.setCardKind(three, gameRule.THREE_WITH_PAIRS);
         } else {
-            return self.setCardKind( three, gameRule.THREE);
+            return self.setCardKind(three, gameRule.THREE);
         }
-    }
-    else if(self._pairs.length > 0){//对子
-        if((self.player.isLandlord && (self.player.nextCardsCnt === 2 || self.player.preCardsCnt === 2))
+    } else if (self._pairs.length > 0) {//对子
+        if ((self.player.isLandlord && (self.player.nextCardsCnt === 2 || self.player.preCardsCnt === 2))
             || (!self.player.isLandlord && landlordCardsCnt === 2))
             return self.maxCards(self._pairs, gameRule.PAIRS);
         else
             return self.minCards(self._pairs, gameRule.PAIRS);
-    }
-    else if(self._one.length > 0 ){//出单牌
-        if((self.player.isLandlord && (self.player.nextCardsCnt <= 2 || self.player.preCardsCnt <= 2))
+    } else if (self._one.length > 0) {//出单牌
+        if ((self.player.isLandlord && (self.player.nextCardsCnt <= 2 || self.player.preCardsCnt <= 2))
             || (!self.player.isLandlord && landlordCardsCnt <= 2))
             return self.maxCards(self._one, gameRule.ONE);
         else
             return self.minCards(self._one, gameRule.ONE);
     } else {//都计算无结果出最小的那张牌
         var one = null;
-        if((self.player.isLandlord && (self.player.nextCardsCnt <= 2 || self.player.preCardsCnt <= 2))
+        if ((self.player.isLandlord && (self.player.nextCardsCnt <= 2 || self.player.preCardsCnt <= 2))
             || (!self.player.isLandlord && landlordCardsCnt <= 2))
             one = self.cards.slice(self.cards.length - 1, self.cards.length);
         else
             one = self.cards.slice(0, 1);
         return {
-            size : 1,
+            size: 1,
             cardKind: gameRule.ONE,
             cardList: one,
             val: one[0].val
@@ -540,11 +538,11 @@ AILogic.prototype.playOneAtTheEnd  = function(landlordCardsCnt) {
  * @param  {object} winc 当前牌面最大牌
  * @return {Array}      提示结果
  */
-AILogic.prototype.prompt = function (winc){
+AILogic.prototype.prompt = function (winc) {
     var self = this,
         stat = gameRule.valCount(self.cards);
 
-    if(winc){//跟牌
+    if (winc) {//跟牌
         var promptList = [];
         /**
          * 设置符合条件的提示牌
@@ -553,11 +551,11 @@ AILogic.prototype.prompt = function (winc){
          * @param  {int} winVal 要求大过的值
          * @param  {array} st 牌统计
          */
-        var setPrompt = function(c, winVal, st){
+        var setPrompt = function (c, winVal, st) {
             var result = [];
             //除去不能大过当前的牌
             for (var i = st.length - 1; i >= 0; i--) {
-                if(st[i].count < c ||st[i].val <= winVal){
+                if (st[i].count < c || st[i].val <= winVal) {
                     st.splice(i, 1);
                 }
             }
@@ -565,7 +563,7 @@ AILogic.prototype.prompt = function (winc){
             //加入各个符合值的单牌
             for (i = 0; i < st.length; i++) {
                 for (j = 0; j < self.cards.length; j++) {
-                    if(self.cards[j].val === st[i].val){
+                    if (self.cards[j].val === st[i].val) {
                         result.push(self.cards.slice(j, j + c));
                         break;
                     }
@@ -578,17 +576,17 @@ AILogic.prototype.prompt = function (winc){
          * @method function
          * @param  {int} n 数量(有几个三根)
          */
-        var getPlanePrompt = function (n){
+        var getPlanePrompt = function (n) {
             var result = [];
-            if(winc.val < 14 && self.cards.length >= winc.size) {//不是最大顺子才有的比
+            if (winc.val < 14 && self.cards.length >= winc.size) {//不是最大顺子才有的比
                 for (var i = winc.val + 1; i < 15; i++) {
                     var proList = [];
                     for (var j = 0; j < self.cards.length; j++) {
-                        if(self.cards[j].val < i && proList.length === 0) break;
-                        if(self.cards[j].val > i || (proList.length > 0 && self.cards[j].val === proList[proList.length - 1].val)){
+                        if (self.cards[j].val < i && proList.length === 0) break;
+                        if (self.cards[j].val > i || (proList.length > 0 && self.cards[j].val === proList[proList.length - 1].val)) {
                             continue;
                         }
-                        if(self.cards[j].val === i
+                        if (self.cards[j].val === i
                             && self.cards[j + 1]
                             && self.cards[j + 1].val === i
                             && self.cards[j + 2]
@@ -598,19 +596,21 @@ AILogic.prototype.prompt = function (winc){
                             j += 2;
                             continue;
                         }
-                        if(proList.length > 0
+                        if (proList.length > 0
                             && proList[proList.length - 1].val - 1 === self.cards[j].val
                             && self.cards[j + 1]
                             && proList[proList.length - 1].val - 1 === self.cards[j + 1].val
                             && self.cards[j + 2]
-                            && proList[proList.length - 1].val - 1 === self.cards[j + 2].val){//判定递减
+                            && proList[proList.length - 1].val - 1 === self.cards[j + 2].val) {//判定递减
                             proList = proList.concat(self.cards.slice(j, j + 3));
                             j += 2;
-                            if(proList.length === n * 3){
+                            if (proList.length === n * 3) {
                                 result.push(proList);
                                 break;
                             }
-                        } else { break;}
+                        } else {
+                            break;
+                        }
                     }
                 }
             }
@@ -631,7 +631,7 @@ AILogic.prototype.prompt = function (winc){
                     onePrompt = setPrompt(1, 2, stat.slice(0));
                 for (var i = 0; i < threePrompt.length; i++) {
                     for (var j = 0; j < onePrompt.length; j++) {
-                        if(onePrompt[j][0].val != threePrompt[i][0].val){
+                        if (onePrompt[j][0].val != threePrompt[i][0].val) {
                             promptList.push(threePrompt[i].concat(onePrompt[j]));
                         }
                     }
@@ -642,61 +642,65 @@ AILogic.prototype.prompt = function (winc){
                     pairsPrompt = setPrompt(2, 2, stat.slice(0));
                 for (var i = 0; i < threePrompt.length; i++) {
                     for (var j = 0; j < pairsPrompt.length; j++) {
-                        if(pairsPrompt[j][0].val != threePrompt[i][0].val){
+                        if (pairsPrompt[j][0].val != threePrompt[i][0].val) {
                             promptList.push(threePrompt[i].concat(pairsPrompt[j]));
                         }
                     }
                 }
                 break;
             case gameRule.PROGRESSION://顺子
-                if(winc.val < 14 && self.cards.length >= winc.size) {//不是最大顺子才有的比
+                if (winc.val < 14 && self.cards.length >= winc.size) {//不是最大顺子才有的比
                     for (var i = winc.val + 1; i < 15; i++) {
                         var proList = [];
                         for (var j = 0; j < self.cards.length; j++) {
-                            if(self.cards[j].val < i && proList.length === 0) break;
-                            if(self.cards[j].val > i || (proList.length > 0 && self.cards[j].val === proList[proList.length - 1].val)){
+                            if (self.cards[j].val < i && proList.length === 0) break;
+                            if (self.cards[j].val > i || (proList.length > 0 && self.cards[j].val === proList[proList.length - 1].val)) {
                                 continue;
                             }
-                            if(self.cards[j].val === i && proList.length === 0) {
+                            if (self.cards[j].val === i && proList.length === 0) {
                                 proList.push(self.cards.slice(j, j + 1)[0]);
                                 continue;
                             }
-                            if(proList[proList.length - 1].val - 1 === self.cards[j].val){//判定递减
+                            if (proList[proList.length - 1].val - 1 === self.cards[j].val) {//判定递减
                                 proList.push(self.cards.slice(j, j + 1)[0]);
-                                if(proList.length === winc.size){
+                                if (proList.length === winc.size) {
                                     promptList.push(proList);
                                     break;
                                 }
-                            } else { break;}
+                            } else {
+                                break;
+                            }
                         }
                     }
                 }
                 break;
             case gameRule.PROGRESSION_PAIRS://连对
-                if(winc.val < 14 && self.cards.length >= winc.size) {//不是最大顺子才有的比
+                if (winc.val < 14 && self.cards.length >= winc.size) {//不是最大顺子才有的比
                     for (var i = winc.val + 1; i < 15; i++) {
                         var proList = [];
                         for (var j = 0; j < self.cards.length; j++) {
-                            if(self.cards[j].val < i && proList.length === 0) break;
-                            if(self.cards[j].val > i || (proList.length > 0 && self.cards[j].val === proList[proList.length - 1].val)){
+                            if (self.cards[j].val < i && proList.length === 0) break;
+                            if (self.cards[j].val > i || (proList.length > 0 && self.cards[j].val === proList[proList.length - 1].val)) {
                                 continue;
                             }
-                            if(self.cards[j].val === i && self.cards[j + 1] && self.cards[j + 1].val === i && proList.length === 0) {
+                            if (self.cards[j].val === i && self.cards[j + 1] && self.cards[j + 1].val === i && proList.length === 0) {
                                 proList = proList.concat(self.cards.slice(j, j + 2));
                                 j++;
                                 continue;
                             }
-                            if(proList.length > 0
+                            if (proList.length > 0
                                 && proList[proList.length - 1].val - 1 === self.cards[j].val
                                 && self.cards[j + 1]
-                                && proList[proList.length - 1].val - 1 === self.cards[j + 1].val){//判定递减
+                                && proList[proList.length - 1].val - 1 === self.cards[j + 1].val) {//判定递减
                                 proList = proList.concat(self.cards.slice(j, j + 2));
                                 j++;
-                                if(proList.length === winc.size){
+                                if (proList.length === winc.size) {
                                     promptList.push(proList);
                                     break;
                                 }
-                            } else { break;}
+                            } else {
+                                break;
+                            }
                         }
                     }
                 }
@@ -722,17 +726,17 @@ AILogic.prototype.prompt = function (winc){
             default:
                 break;
         }
-        if(winc.cardKind != gameRule.KING_BOMB && winc.cardKind != gameRule.BOMB){
+        if (winc.cardKind != gameRule.KING_BOMB && winc.cardKind != gameRule.BOMB) {
             //炸弹加入
-            if(self._bomb.length > 0){
-                for (var i = self._bomb.length - 1; i >= 0 ; i--) {
+            if (self._bomb.length > 0) {
+                for (var i = self._bomb.length - 1; i >= 0; i--) {
                     promptList.push(self._bomb[i].cardList);
                 }
             }
         }
-        if(winc.cardKind != gameRule.KING_BOMB){
+        if (winc.cardKind != gameRule.KING_BOMB) {
             //王炸加入
-            if(self._kingBomb.length > 0){
+            if (self._kingBomb.length > 0) {
                 promptList.push(self._kingBomb[0].cardList);
             }
         }
@@ -740,7 +744,7 @@ AILogic.prototype.prompt = function (winc){
     } else {//出牌
         var promptList = [];
         for (var i = stat.length - 1; i >= 0; i--) {
-            if(i != 0){
+            if (i != 0) {
                 promptList.push(self.cards.splice(self.cards.length - stat[i].count, self.cards.length - 1));
             } else {
                 promptList.push(self.cards);
@@ -757,11 +761,11 @@ AILogic.prototype.prompt = function (winc){
  * @param  {number} n - 需要大过的值
  * @return 值
  */
-AILogic.prototype.getMinVal = function(n, v){
+AILogic.prototype.getMinVal = function (n, v) {
     var self = this,
         c = gameRule.valCount(self.cards);
     for (var i = c.length - 1; i >= 0; i--) {
-        if(c[i].count === n  && c[i].val > v){
+        if (c[i].count === n && c[i].val > v) {
             return self.cards.splice(i, 1);
         }
     }
@@ -772,7 +776,7 @@ AILogic.prototype.getMinVal = function(n, v){
  * @method function
  * @return {[type]} [description]
  */
-AILogic.prototype.analyse = function(){
+AILogic.prototype.analyse = function () {
     var self = this,
         target = self.cards.slice(0),//拷贝一份牌来分析
         stat = null,//统计信息
@@ -782,7 +786,7 @@ AILogic.prototype.analyse = function(){
         targetWobpp = null;//除去炸弹、连对之后的牌组
     //定义牌型
     self._one = [];
-    self._pairs =[];
+    self._pairs = [];
     self._kingBomb = [];
     self._bomb = [];
     self._three = [];
@@ -791,13 +795,13 @@ AILogic.prototype.analyse = function(){
     self._progressionPairs = [];
     target.sort(gameRule.cardSort);
     //判定王炸
-    if(gameRule.isKingBomb(target.slice(0,2))){
+    if (gameRule.isKingBomb(target.slice(0, 2))) {
         self._kingBomb.push(new AICardType(17, target.splice(0, 2)));
     }
     //判定炸弹
     stat = gameRule.valCount(target);
     for (var i = 0; i < stat.length; i++) {
-        if(stat[i].count === 4){
+        if (stat[i].count === 4) {
             var list = [];
             self.moveItem(target, list, stat[i].val);
             self._bomb.push(new AICardType(list[0].val, list));
@@ -828,16 +832,16 @@ AILogic.prototype.analyse = function(){
     //除去顺子、炸弹、三根后判断对子、单牌
     stat = gameRule.valCount(targetWobp);
     for (i = 0; i < stat.length; i++) {
-        if(stat[i].count === 1){//单牌
+        if (stat[i].count === 1) {//单牌
             for (var j = 0; j < targetWobp.length; j++) {
-                if(targetWobp[j].val === stat[i].val){
-                    self._one.push(new AICardType(stat[i].val, targetWobp.splice(j,1)));
+                if (targetWobp[j].val === stat[i].val) {
+                    self._one.push(new AICardType(stat[i].val, targetWobp.splice(j, 1)));
                 }
             }
-        } else if(stat[i].count === 2){//对子
+        } else if (stat[i].count === 2) {//对子
             for (var j = 0; j < targetWobp.length; j++) {
-                if(targetWobp[j].val === stat[i].val){
-                    self._pairs.push(new AICardType(stat[i].val, targetWobp.splice(j,2)));
+                if (targetWobp[j].val === stat[i].val) {
+                    self._pairs.push(new AICardType(stat[i].val, targetWobp.splice(j, 2)));
                 }
             }
         }
@@ -849,11 +853,11 @@ AILogic.prototype.analyse = function(){
  * 判断给定牌中的三根
  * @method judgeThree
  */
-AILogic.prototype.judgeThree = function (cards){
+AILogic.prototype.judgeThree = function (cards) {
     var self = this,
         stat = gameRule.valCount(cards);
     for (i = 0; i < stat.length; i++) {
-        if(stat[i].count === 3){
+        if (stat[i].count === 3) {
             var list = [];
             self.moveItem(cards, list, stat[i].val);
             self._three.push(new AICardType(list[0].val, list));
@@ -865,20 +869,20 @@ AILogic.prototype.judgeThree = function (cards){
  * 判断给定牌中的飞机
  * @method judgePlane
  */
-AILogic.prototype.judgePlane = function (){
+AILogic.prototype.judgePlane = function () {
     var self = this;
-    if(self._three.length > 1){
+    if (self._three.length > 1) {
         var proList = [];
         for (i = 0; i < self._three.length; i++) {//遍历统计结果
-            if(self._three[i].val >= 15) continue;//三顺必须小于2
-            if(proList.length == 0){
+            if (self._three[i].val >= 15) continue;//三顺必须小于2
+            if (proList.length == 0) {
                 proList.push({'obj': self._three[i], 'fromIndex': i});
                 continue;
             }
-            if(proList[proList.length - 1].val - 1 == self._three[i].val){//判定递减
+            if (proList[proList.length - 1].val - 1 == self._three[i].val) {//判定递减
                 proList.push({'obj': self._three[i], 'fromIndex': i});
             } else {
-                if(proList.length > 1){//已经有三顺，先保存
+                if (proList.length > 1) {//已经有三顺，先保存
                     var planeCards = [];
                     for (var j = 0; j < proList.length; j++) {
                         planeCards = planeCards.concat(proList[j].obj.cardList);
@@ -893,7 +897,7 @@ AILogic.prototype.judgePlane = function (){
                 proList.push({'obj': self._three[i], 'fromIndex': i});
             }
         }
-        if(proList.length > 1){//有三顺，保存
+        if (proList.length > 1) {//有三顺，保存
             var planeCards = [];
             for (var j = 0; j < proList.length; j++) {
                 planeCards = planeCards.concat(proList[j].obj.cardList);
@@ -911,10 +915,10 @@ AILogic.prototype.judgePlane = function (){
  * @method judgeProgression
  * @param  {[array]}         cards 指定的牌
  */
-AILogic.prototype.judgeProgression = function (cards){
+AILogic.prototype.judgeProgression = function (cards) {
     var self = this;
 
-    var saveProgression = function (proList){
+    var saveProgression = function (proList) {
         var progression = [];
         for (var j = 0; j < proList.length; j++) {
             progression.push(proList[j].obj);
@@ -924,33 +928,39 @@ AILogic.prototype.judgeProgression = function (cards){
             cards.splice(proList[k].fromIndex, 1);
         }
     };
-    //判定顺子
-    if(cards.length >= 5){
+
+
+    if (cards.length >= 5) { // 判定顺子
         var proList = [];
         for (var i = 0; i < cards.length; i++) {
-            if(cards[i].val >= 15) continue;//顺子必须小于2
-            if(proList.length == 0){
+            if (cards[i].val >= 15) { // 顺子必须小于2
+                continue;
+            }
+
+            if (proList.length == 0) {
                 proList.push({'obj': cards[i], 'fromIndex': i});
                 continue;
             }
-            if(proList[proList.length - 1].obj.val - 1 === cards[i].val){//判定递减
+
+            if (proList[proList.length - 1].obj.val - 1 === cards[i].val) {//判定递减
                 proList.push({'obj': cards[i], 'fromIndex': i});
-                if(proList.length === 5) break;
+                if (proList.length === 5) {
+                    break;
+                }
             } else if (proList[proList.length - 1].obj.val === cards[i].val) {//相等跳出本轮
                 continue;
             } else {
-                if(proList.length >= 5){//已经有顺子，先保存
+                if (proList.length >= 5) {//已经有顺子，先保存
                     //saveProgression(proList);
                     //proList = [];
                     break;
-                } else {
-                    //重新计算
+                } else { //重新计算
                     proList = [];
                     proList.push({'obj': cards[i], 'fromIndex': i});
                 }
             }
         }
-        if(proList.length === 5){//有顺子，保存
+        if (proList.length === 5) { // 有顺子，保存
             saveProgression(proList);
             self.judgeProgression(cards);//再次判断顺子
         } else {
@@ -964,22 +974,22 @@ AILogic.prototype.judgeProgression = function (cards){
  * @method judgeProgression
  * @param  {[array]}         cards 指定的牌
  */
-AILogic.prototype.joinProgression = function (cards){
+AILogic.prototype.joinProgression = function (cards) {
     var self = this;
     for (var i = 0; i < self._progression.length; i++) {//拼接其他散牌
         for (var j = 0; j < cards.length; j++) {
-            if(self._progression[i].val != 14 && self._progression[i].val === cards[j].val - 1){
+            if (self._progression[i].val != 14 && self._progression[i].val === cards[j].val - 1) {
                 self._progression[i].cardList.unshift(cards.splice(j, 1)[0]);
-            } else if(cards[j].val === self._progression[i].val - self._progression[i].cardList.length){
+            } else if (cards[j].val === self._progression[i].val - self._progression[i].cardList.length) {
                 self._progression[i].cardList.push(cards.splice(j, 1)[0]);
             }
         }
     }
     var temp = self._progression.slice(0);
     for (i = 0; i < temp.length; i++) {//连接顺子
-        if( i < temp.length - 1 && temp[i].val - temp[i].cardList.length === temp[i + 1].val){
+        if (i < temp.length - 1 && temp[i].val - temp[i].cardList.length === temp[i + 1].val) {
             self._progression[i].cardList = self._progression[i].cardList.concat(self._progression[i + 1].cardList);
-            self._progression.splice( ++i, 1);
+            self._progression.splice(++i, 1);
         }
     }
 };
@@ -989,14 +999,14 @@ AILogic.prototype.joinProgression = function (cards){
  * @method judgeProgressionPairs
  * @param  {[array]}         cards 指定的牌
  */
-AILogic.prototype.judgeProgressionPairs = function (cards){
+AILogic.prototype.judgeProgressionPairs = function (cards) {
     var self = this;
 
-    var saveProgressionPairs = function (proList){
+    var saveProgressionPairs = function (proList) {
         var progressionPairs = [];
         for (var i = proList.length - 1; i >= 0; i--) {//除去已经被取走的牌
             for (var j = 0; j < cards.length; j++) {
-                if(cards[j].val === proList[i]){
+                if (cards[j].val === proList[i]) {
                     progressionPairs = progressionPairs.concat(cards.splice(j, 2));
                     break;
                 }
@@ -1005,45 +1015,42 @@ AILogic.prototype.judgeProgressionPairs = function (cards){
         progressionPairs.sort(gameRule.cardSort);
         self._progressionPairs.push(new AICardType(proList[0], progressionPairs));
     };
-    //判定连对
-    if(cards.length >= 6){
+
+    if (cards.length >= 6) { // 判定连对
         var proList = [];
         var stat = gameRule.valCount(cards);//统计
         for (var i = 0; i < stat.length; i++) {
-            if(stat[i].val >= 15){//连对必须小于2
+            if (stat[i].val >= 15) {//连对必须小于2
                 continue;
             }
-            if(proList.length == 0  && stat[i].count >= 2){
+            if (proList.length == 0 && stat[i].count >= 2) {
                 proList.push(stat[i].val);
                 continue;
             }
-            if(proList[proList.length - 1] - 1 === stat[i].val && stat[i].count >= 2){//判定递减
+            if (proList[proList.length - 1] - 1 === stat[i].val && stat[i].count >= 2) {//判定递减
                 proList.push(stat[i].val);
             } else {
-                if(proList.length >= 3){//已经有连对，先保存
+                if (proList.length >= 3) {//已经有连对，先保存
                     //saveProgressionPairs(proList);
                     //proList = [];
                     break;
                 } else {
                     //重新计算
                     proList = [];
-                    if(stat[i].count >= 2) proList.push(stat[i].val);
+                    if (stat[i].count >= 2) proList.push(stat[i].val);
                 }
             }
         }
-        if(proList.length >= 3){//有顺子，保存
+        if (proList.length >= 3) {//有顺子，保存
             saveProgressionPairs(proList);
             self.judgeProgressionPairs(cards);
         }
     }
 };
 
-/**
- * 将src中对应值的牌数据移到dest中
- */
-AILogic.prototype.moveItem = function(src, dest, v){
-    for (var i =  src.length - 1; i >= 0; i--) {
-        if(src[i].val === v){
+AILogic.prototype.moveItem = function (src, dest, v) { // 将src中对应值的牌数据移到dest中
+    for (var i = src.length - 1; i >= 0; i--) {
+        if (src[i].val === v) {
             dest.push(src.splice(i, 1)[0]);
         }
     }
@@ -1055,7 +1062,7 @@ AILogic.prototype.moveItem = function(src, dest, v){
  * @param  {[object]}    obj  对象
  * @param  {[kind]}    kind 牌型
  */
-AILogic.prototype.setCardKind = function (obj, kind){
+AILogic.prototype.setCardKind = function (obj, kind) {
     obj.cardKind = kind;
     obj.size = obj.cardList.length;
     return obj;
@@ -1066,22 +1073,22 @@ AILogic.prototype.setCardKind = function (obj, kind){
  * 指定牌张数
  * @return
  */
-AILogic.prototype.minPlane = function (len, winc){
+AILogic.prototype.minPlane = function (len, winc) {
     var self = this;
-    if(self._plane.length > 0){
-        for (var i = self._plane.length - 1; i >= 0 ; i--) {//从小值开始判断
-            if(winc.val < self._plane[i].val && len <= self._plane[i].cardList.length){
-                if(len === self._plane[i].cardList.length){
+    if (self._plane.length > 0) {
+        for (var i = self._plane.length - 1; i >= 0; i--) {//从小值开始判断
+            if (winc.val < self._plane[i].val && len <= self._plane[i].cardList.length) {
+                if (len === self._plane[i].cardList.length) {
                     return self.setCardKind(self._plane[i], gameRule.PLANE);
                 } else {
                     var valDiff = self._plane[i].val - winc.val,
                         sizeDiff = (self._plane[i].cardList.length - len) / 3;
                     for (var j = 0; j < sizeDiff; j++) {//拆顺
-                        if(valDiff > 1){
+                        if (valDiff > 1) {
                             for (var k = 0; k < 3; k++) {
                                 self._plane[i].cardList.shift();
                             }
-                            valDiff -- ;
+                            valDiff--;
                             continue;
                         }
                         for (var k = 0; k < 3; k++) {
@@ -1103,12 +1110,12 @@ AILogic.prototype.minPlane = function (len, winc){
  * @param  {number} v    要大过的值
  * @return
  */
-AILogic.prototype.minCards = function (list, kind, v){
+AILogic.prototype.minCards = function (list, kind, v) {
     var self = this;
     v = v ? v : 2;
-    if(list.length > 0){
-        for (var i = list.length - 1; i >= 0 ; i--) {//从小值开始判断
-            if(v < list[i].val){
+    if (list.length > 0) {
+        for (var i = list.length - 1; i >= 0; i--) {//从小值开始判断
+            if (v < list[i].val) {
                 return self.setCardKind(list[i], kind);
             }
         }
@@ -1123,12 +1130,12 @@ AILogic.prototype.minCards = function (list, kind, v){
  * @param  {number} v    要大过的值
  * @return
  */
-AILogic.prototype.maxCards = function (list, kind, v){
+AILogic.prototype.maxCards = function (list, kind, v) {
     var self = this,
         max = null;
-    if(list.length > 0){
-        for (var i = 0; i < list.length ; i++) {//从小值开始判断
-            if((max && list[i].val > max.val)|| !max){
+    if (list.length > 0) {
+        for (var i = 0; i < list.length; i++) {//从小值开始判断
+            if ((max && list[i].val > max.val) || !max) {
                 max = list[i];
             }
         }
@@ -1146,16 +1153,17 @@ AILogic.prototype.maxCards = function (list, kind, v){
  * @param  {boolean} isWinnerIsLandlord 当前最大是否是地主
  * @return {number} winnerCardCount 当前最大那家剩余手牌数
  */
-AILogic.prototype.matchCards = function(list, kind, winc, isWinnerIsLandlord, winnerCardCount) {
+AILogic.prototype.matchCards = function (list, kind, winc, isWinnerIsLandlord, winnerCardCount) {
     var self = this;
-    if(self.player.isLandlord){//坐庄打法
-        if(self.player.nextCardsCnt < 3 || self.player.preCardsCnt < 3 )
+    if (self.player.isLandlord) { // 坐庄打法
+        if (self.player.nextCardsCnt < 3 || self.player.preCardsCnt < 3) {
             return self.maxCards(list, kind, winc.val);
-        else
+        } else {
             return self.minCards(list, kind, winc.val);
-    } else {//偏家打法
-        if(isWinnerIsLandlord){//地主大时
-            if(winnerCardCount < 3){
+        }
+    } else { // 偏家打法
+        if (isWinnerIsLandlord) {//地主大时
+            if (winnerCardCount < 3) {
                 return self.maxCards(list, kind, winc.val);
             } else {
                 return self.minCards(list, kind, winc.val);
@@ -1166,6 +1174,7 @@ AILogic.prototype.matchCards = function(list, kind, winc, isWinnerIsLandlord, wi
         }
     }
 };
+
 /**
  * 从对子或者单牌中获取一张牌
  * @param  {array} list [description]
@@ -1173,20 +1182,20 @@ AILogic.prototype.matchCards = function(list, kind, winc, isWinnerIsLandlord, wi
  * * @param  {number} notEq    对子中不允许出现的值
  * @return
  */
-AILogic.prototype.minOne = function (v, notEq){
+AILogic.prototype.minOne = function (v, notEq) {
     var self = this,
         one = self.minCards(self._one, gameRule.ONE, v),
         oneFromPairs = self.offPairs(notEq);
-    if(!one){//没有单根，找对
-        if(oneFromPairs){
+    if (!one) {//没有单根，找对
+        if (oneFromPairs) {
             self.deleteOne(oneFromPairs);
             return oneFromPairs;
         } else {
             return null;
         }
     } else {
-        if(one.val > 14){//保留2和大小王
-            if(oneFromPairs){
+        if (one.val > 14) {//保留2和大小王
+            if (oneFromPairs) {
                 self.deleteOne(oneFromPairs);
                 return oneFromPairs;
             } else
@@ -1204,12 +1213,12 @@ AILogic.prototype.minOne = function (v, notEq){
  * @param  {number} notEq 不能等于的值
  * @return {card}    拆出来得到的牌
  */
-AILogic.prototype.offPairs = function (v, notEq){
+AILogic.prototype.offPairs = function (v, notEq) {
     var self = this,
         pairs = self.minCards(self._pairs, gameRule.PAIRS, v);
-    if(pairs){
+    if (pairs) {
         while (true) {
-            if(pairs.cardList[0].val === notEq){
+            if (pairs.cardList[0].val === notEq) {
                 pairs = self.minCards(self._pairs, gameRule.PAIRS, pairs.cardList[0].val);
             } else {
                 break;
@@ -1219,58 +1228,64 @@ AILogic.prototype.offPairs = function (v, notEq){
 
     return pairs ? pairs.cardList[0] : null;
 };
-/*
-    删掉一张牌并重新分析
+
+/**
+ * 删掉一张牌并重新分析
  */
-AILogic.prototype.deleteOne = function (card){
+AILogic.prototype.deleteOne = function (card) {
     for (var i = 0; i < this.cards.length; i++) {
-        if(this.cards[i].val === card.val && this.cards[i].type === card.type){
+        if (this.cards[i].val === card.val && this.cards[i].type === card.type) {
             this.cards.splice(i, 1);
         }
     }
     this.analyse();
 };
+
 /**
  * 手牌评分,用于AI根据自己手牌来叫分
  * @method function
  * @return {[nmber]} 所评得分
  */
-AILogic.prototype.judgeScore = function() {
+AILogic.prototype.judgeScore = function () {
     var self = this,
         score = 0;
-    score += self._bomb.length * 6;//有炸弹加六分
-    if(self._kingBomb.length > 0 ){//王炸8分
+    score += self._bomb.length * 6; // 有炸弹加六分
+    if (self._kingBomb.length > 0) { // 王炸8分
         score += 8;
     } else {
-        if(self.cards[0].val === 17){
+        if (self.cards[0].val === 17) {
             score += 4;
-        } else if(self.cards[0].val === 16){
+        } else if (self.cards[0].val === 16) {
             score += 3;
         }
     }
     for (var i = 0; i < self.cards.length; i++) {
-        if(self.cards[i].val === 15){
+        if (self.cards[i].val === 15) {
             score += 2;
         }
     }
     console.info(self.player.name + "手牌评分：" + score);
-    if(score >= 7){
+
+    if (score >= 7) {
         return 3;
-    } else if(score >= 5){
+    } else if (score >= 5) {
         return 2;
-    } else if(score >= 3){
+    } else if (score >= 3) {
         return 1;
-    } else {//4相当于不叫
+    } else { // 4相当于不叫
         return 4;
     }
 };
 
-//出牌排序
-//排序，单牌、对，三根，炸弹从小到大
-AILogic.prototype.promptSort = function(a, b){
-    if(a.count === b.count){
+/**
+ * 出牌排序
+ * 排序，单牌、对，三根，炸弹从小到大
+ */
+AILogic.prototype.promptSort = function (a, b) {
+    if (a.count === b.count) {
         return a.val > b.val ? 1 : -1;
-    } if(a.count < b.count){
+    }
+    if (a.count < b.count) {
         return -1;
     } else {
         return 1;
@@ -1281,29 +1296,29 @@ AILogic.prototype.promptSort = function(a, b){
  * 手数，手牌需要打出几次才能打完
  * @method times
  */
-AILogic.prototype.times = function (){
+AILogic.prototype.times = function () {
     var self = this;
     var t = this._kingBomb.length +
-                this._bomb.length +
-                this._progression.length +
-                this._progressionPairs.length +
-                this._one.length +
-                this._pairs.length;
+        this._bomb.length +
+        this._progression.length +
+        this._progressionPairs.length +
+        this._one.length +
+        this._pairs.length;
     var threeCount = this._three.length;
-    if(this._plane.length > 0){
+    if (this._plane.length > 0) {
         for (var i = 0; i < this._plane.length; i++) {
             threeCount += this._plane[i].cardList.length / 3;
         }
     }
-    if( threeCount - (this._one.length + this._pairs.length) > 0){
+    if (threeCount - (this._one.length + this._pairs.length) > 0) {
         t += threeCount - (this._one.length + this._pairs.length);
     }
     return t;
 };
 
-AILogic.prototype.log = function (){
+AILogic.prototype.log = function () { // 打印当前手牌情况
     var self = this;
-    console.info('以下显示【' + self.player.name + '】手牌概况，手数：' + self.times() );
+    console.info('以下显示【' + self.player.name + '】手牌概况，手数：' + self.times());
     console.info('王炸');
     console.info(self._kingBomb);
     console.info('炸弹');

@@ -2,7 +2,7 @@ var Desk = require('../model/Desk.js');
 var util = require('../util/Util.js');
 var offline = require('../mgr/OfflinePlayerMgr.js');
 
-var DeskMgr = function () { // 游戏分桌管理器
+var DeskMgr = function () { // 游戏分桌管理器 每个桌子对象都是独立的 根据桌子号找到对应的桌子
     this.desks = {};
     this.currentNo = 0;
 };

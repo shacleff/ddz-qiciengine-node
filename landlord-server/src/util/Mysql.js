@@ -6,11 +6,11 @@
  * mysql 数据库操作模块
  */
 
-var mysql = require('mysql'),
-    config = require('../../config/Config.js');
+var mysql = require('mysql');
+var config = require('../../config/Config.js');
 
 
-var Dao = function(){
+var Dao = function () {
     this._mysqlDb = null;
     this.init();
 };
@@ -18,7 +18,7 @@ var Dao = function(){
 /* 内部函数 */
 
 // post init 回调函数
-Dao.prototype.init = function(){
+Dao.prototype.init = function () {
     var self = this;
     // 连接所有配置的 mysql 服务器
     // 缓存连接池
@@ -26,8 +26,8 @@ Dao.prototype.init = function(){
 
     // 连接mysql
     console.log('连接 mysql 数据库中...');
-    self._mysqlDb.getConnection(function(err, connection){
-        if(err){
+    self._mysqlDb.getConnection(function (err, connection) {
+        if (err) {
             console.error(err);
             return;
         }
@@ -42,18 +42,18 @@ Dao.prototype.init = function(){
  * @param {string} sql - mysql sql
  *    比如 select * from test;
  */
-Dao.prototype.query = function (sql, params){
+Dao.prototype.query = function (sql, params) {
     var self = this;
-    return new Promise(function(resolve, reject){
+    return new Promise(function (resolve, reject) {
         var dbPool = self._mysqlDb;
-        if (!dbPool){
+        if (!dbPool) {
             reject(-1);
             return;
         }
 
         // 先取得一个 mysql 连接
-        dbPool.getConnection(function(err, connection) {
-            if (err){
+        dbPool.getConnection(function (err, connection) {
+            if (err) {
                 // 取连接失败
                 console.error(err.stack);
                 reject(err);
@@ -61,12 +61,12 @@ Dao.prototype.query = function (sql, params){
             }
 
             // 执行 mysql 语句
-            connection.query(sql, params ? params : [], function(err, rows){
+            connection.query(sql, params ? params : [], function (err, rows) {
                 // 执行完成，将连接移回 pool 中
                 connection.release();
                 if (err)
                     reject(err);
-                else{
+                else {
                     resolve(rows);
                 }
             })
@@ -75,7 +75,7 @@ Dao.prototype.query = function (sql, params){
 }
 
 
-Dao.prototype.getDbPool = function (dbName){
+Dao.prototype.getDbPool = function (dbName) {
     return _mysqlDb[dbName];
 }
 
@@ -87,8 +87,8 @@ Dao.prototype.getDbPool = function (dbName){
  *    比如 ['update test set value = 1 where id =1;', 'update test set value = 2 where id = 2']
  * @param {function} callback - 回调函数
  */
-Dao.prototype.transaction = function (sqlList, callback){
-    return new Promise(function(resolve, reject){
+Dao.prototype.transaction = function (sqlList, callback) {
+    return new Promise(function (resolve, reject) {
         var dbPool = self._mysqlDb;
         if (!dbPool) {
             reject(-1);
@@ -96,7 +96,7 @@ Dao.prototype.transaction = function (sqlList, callback){
         }
 
         // 先取得一个 mysql 连接
-        dbPool.getConnection(function(err, connection) {
+        dbPool.getConnection(function (err, connection) {
             if (err) {
                 // 取连接失败
                 error(err.stack);
@@ -105,7 +105,7 @@ Dao.prototype.transaction = function (sqlList, callback){
             }
 
             // 执行 mysql begin transaction 语句
-            connection.beginTransaction(function(err) {
+            connection.beginTransaction(function (err) {
                 if (err) {
                     // 取连接失败
                     error(err.stack);
@@ -114,33 +114,26 @@ Dao.prototype.transaction = function (sqlList, callback){
                 }
 
                 // 依次执行 sql 语句
-                async.eachSeries(sqlList, function(sql, callback) {
-
-                     // 执行 mysql 语句
-                    connection.query(sql, function(err, rows){
+                async.eachSeries(sqlList, function (sql, callback) {
+                    connection.query(sql, function (err, rows) { // 执行 mysql 语句
                         callback(err, rows);
                     })
-                }, function(err) {
+                }, function (err) {
                     if (err) {
-                        // 有错误，回滚
-                        connection.rollback(function() {
-                            // 执行完成，将连接移回 pool 中
-                            connection.release();
-
-                            // 调用回调
-                            reject(err);
+                        connection.rollback(function () { // 有错误，回滚
+                            connection.release(); // 执行完成，将连接移回 pool 中
+                            reject(err); // 调用回调
                         });
-                    }
-                    else {
-                        // 成功，提交
-                        connection.commit(function(err) {
+                    } else {
+                        connection.commit(function (err) { // 成功，提交
                             // 执行完成，将连接移回 pool 中
                             connection.release();
 
-                            if (err)
+                            if (err){
                                 reject(err);
-                            else
+                            }else{
                                 resolve({});
+                            }
                         });
                     }
                 });
@@ -157,17 +150,16 @@ Dao.prototype.transaction = function (sqlList, callback){
  *    比如 ['update test set value = 1 where id =1;', 'update test set value = 2 where id = 2']
  * @param {function} callback - 回调函数
  */
-Dao.prototype.batchQuery = function (dbName, sqlList, callback){
-    return new Promise(function(resolve, reject){
+Dao.prototype.batchQuery = function (dbName, sqlList, callback) {
+    return new Promise(function (resolve, reject) {
         var dbPool = _mysqlDb[dbName];
-        if (!dbPool)
-        {
+        if (!dbPool) {
             reject(-1);
             return;
         }
 
         // 先取得一个 mysql 连接
-        dbPool.getConnection(function(err, connection) {
+        dbPool.getConnection(function (err, connection) {
             if (err) {
                 // 取连接失败
                 error(err.stack);
@@ -176,7 +168,7 @@ Dao.prototype.batchQuery = function (dbName, sqlList, callback){
             }
 
             // 执行 mysql begin transaction 语句
-            connection.beginTransaction(function(err) {
+            connection.beginTransaction(function (err) {
                 if (err) {
                     // 取连接失败
                     error(err.stack);
@@ -186,20 +178,20 @@ Dao.prototype.batchQuery = function (dbName, sqlList, callback){
 
                 // 依次执行 sql 语句
                 var tempErr;
-                async.eachSeries(sqlList, function(sql, callback) {
+                async.eachSeries(sqlList, function (sql, callback) {
 
-                     // 执行 mysql 语句
-                    connection.query(sql, function(err, rows){
+                    // 执行 mysql 语句
+                    connection.query(sql, function (err, rows) {
                         if (err)
-                            // 若有错误，缓存之
+                        // 若有错误，缓存之
                             tempErr = err;
 
                         callback(null, rows);
                     })
-                }, function(err) {
+                }, function (err) {
 
                     // 总是提交
-                    connection.commit(function(e) {
+                    connection.commit(function (e) {
                         // 执行完成，将连接移回 pool 中
                         connection.release();
 

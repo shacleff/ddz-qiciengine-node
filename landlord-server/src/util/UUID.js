@@ -1,13 +1,16 @@
 var UUID = function () {
     this.id = this.createUUID();
 };
-UUID.prototype.valueOf = function() {
+
+UUID.prototype.valueOf = function () {
     return this.id;
 };
-UUID.prototype.toString = function() {
+
+UUID.prototype.toString = function () {
     return this.id;
 };
-UUID.prototype.createUUID = function() {
+
+UUID.prototype.createUUID = function () {
     var c = new Date(1582, 10, 15, 0, 0, 0, 0);
     var f = new Date();
     var h = f.getTime() - c.getTime();
@@ -17,13 +20,14 @@ UUID.prototype.createUUID = function() {
     var b = UUID.getIntegerBits(UUID.rand(4095), 0, 7);
     var d = UUID.getIntegerBits(UUID.rand(4095), 0, 7);
     var a = UUID.getIntegerBits(UUID.rand(8191), 0, 7) +
-            UUID.getIntegerBits(UUID.rand(8191), 8, 15) +
-            UUID.getIntegerBits(UUID.rand(8191), 0, 7) +
-            UUID.getIntegerBits(UUID.rand(8191), 8, 15) +
-            UUID.getIntegerBits(UUID.rand(8191), 0, 15);
+        UUID.getIntegerBits(UUID.rand(8191), 8, 15) +
+        UUID.getIntegerBits(UUID.rand(8191), 0, 7) +
+        UUID.getIntegerBits(UUID.rand(8191), 8, 15) +
+        UUID.getIntegerBits(UUID.rand(8191), 0, 15);
     return i + g + e + b + d + a;
 };
-UUID.getIntegerBits = function(f, g, b) {
+
+UUID.getIntegerBits = function (f, g, b) {
     var a = UUID.returnBase(f, 16);
     var d = new Array();
     var e = "";
@@ -40,7 +44,8 @@ UUID.getIntegerBits = function(f, g, b) {
     }
     return e
 };
-UUID.returnBase = function(c, d) {
+
+UUID.returnBase = function (c, d) {
     var e = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B",
         "C",
         "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P",
@@ -60,7 +65,9 @@ UUID.returnBase = function(c, d) {
     }
     return b
 };
-UUID.rand = function(a) {
+
+UUID.rand = function (a) {
     return Math.floor(Math.random() * a)
 };
+
 module.exports = UUID;
