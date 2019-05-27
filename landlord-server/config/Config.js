@@ -10,10 +10,10 @@ module.exports = {
     port : 8900,
 
     // telnet 的端口号
-    telnetPort : 5001,
+    // telnetPort : 5001,
 
     // cluster 进程数量
-    clusterNum : 4,
+    // clusterNum : 4,
 
     // mysql 配置(前缀必须为 mysqlDb)
     mysqlDb : {
