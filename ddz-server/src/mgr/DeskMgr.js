@@ -3,8 +3,8 @@ var util = require('../util/Util.js');
 var offline = require('../mgr/OfflinePlayerMgr.js');
 
 var DeskMgr = function () { // 游戏分桌管理器 每个桌子对象都是独立的 根据桌子号找到对应的桌子
-    this.desks = {};
-    this.currentNo = 0;
+    this.desks = {}; // 存储所有的桌子
+    this.currentNo = 0; // 当前桌子编号
 };
 
 DeskMgr.prototype.playerJoin = function (player) { // 加入新玩家并分配桌号,并设置玩家的桌号和座位号

@@ -12,8 +12,8 @@ var offline = require('./mgr/OfflinePlayerMgr.js');
 var Player = require('./model/Player.js');
 var playerScoreDao = require('./dao/PlayerScoreDao.js');
 
-var deskMgr = new DeskMgr();
-var cardMgr = new CardMgr();
+var deskMgr = new DeskMgr(); // 桌子管理器,存储所有的桌子、分配桌子号等
+var cardMgr = new CardMgr(); // 负责为桌子发牌之类的,只提供一些方法，不存储数据
 
 var port = 8081;
 server.listen(port, function () {
@@ -59,21 +59,25 @@ var handler = { // 游戏逻辑处理
             }
         }
     },
+
     play: function (data) {
-        var self = this,
-            desk = deskMgr.desks[data.deskNo],
-            next = deskMgr.nextSeatNo(data.seatNo);
+        var self = this;
+        var desk = deskMgr.desks[data.deskNo];
+        var next = deskMgr.nextSeatNo(data.seatNo);
         var resultData = {
             'preSeatNo': data.seatNo, //前一位出牌玩家
             'nextSeatNo': next
         };
+
         if (data.cardInfo) {//有出牌更新桌位信息
-            if (data.cardInfo.cardKind === gameRule.BOMB || data.cardInfo.cardKind === gameRule.KING_BOMB) {
+            if (data.cardInfo.cardKind === gameRule.BOMB || data.cardInfo.cardKind === gameRule.KING_BOMB) { // 有炸弹加翻
                 desk.rate *= 2;
                 resultData.rate = desk.rate;
             }
-            desk.seats[data.seatNo].subCards(data.cardInfo.cardList);
-            if (desk.seats[data.seatNo].cardList.length === 0) {//牌出完，判断胜利方
+
+            desk.seats[data.seatNo].subCards(data.cardInfo.cardList); // 剔除手牌
+
+            if (desk.seats[data.seatNo].cardList.length === 0) { //牌出完，判断胜利方
                 io.sockets.in(data.deskNo).emit('gameover', desk.gameover(data.seatNo, data.cardInfo));
                 desk.afterGameover();
                 return;

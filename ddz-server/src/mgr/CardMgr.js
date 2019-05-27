@@ -1,7 +1,6 @@
 var Card = require('../model/Card.js');
 
 var CardMgr = function () { // 卡牌管理器
-
 };
 
 CardMgr.prototype.dealCards = function (desk) { // 发牌
