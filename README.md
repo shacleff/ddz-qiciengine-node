@@ -6,7 +6,19 @@
 ## 2）服务器
 *  服务器是node.js 6.11.1，越来越喜欢这个玩意了,别的node版本报错
 
-## 3）qiciengine启动
+## 3）环境搭建
+
+### 1.mysql数据库启动
+
+### 2.服务器启动
+
+```
+➜  ddz-server git:(master) ✗ sh start-server.sh
+连接 mysql 数据库中...
+斗地主服务开启，port = 8081
+```
+
+### 3.qiciengine启动客户端
 
 *  windows
   
