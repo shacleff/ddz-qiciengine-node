@@ -1,0 +1,42 @@
+1)假如当前有3桌牌
+  table1-->tid1:
+    p1
+    p2
+    p3
+    p4
+
+  table2-->tid2:
+    p5
+    p6
+    p7
+
+  table3-->tid3:
+    p8
+    p9
+
+2)table_manager
+  (1)tid-->table 桌子id与桌子之间映射列表
+  (2)cur_gen_tid 当前分配到的桌子编号
+
+3)table
+  (1)player_list[] 桌子里面所有玩家
+  (2)tid 当前桌子编号
+  (3)max_player_num 桌子最大容纳人数
+  (4)is_game_start 桌子对局是否开始
+  (5)rule 玩法规则
+  (6)player_put_card(msg) 玩家出一张牌
+
+4)player
+  (1)tid 玩家所在的桌子id
+  (2)socket 玩家连接到游戏服务器的socket句柄
+  (3)vip 玩家vip等级
+  (4)coin 玩家金币数
+
+5)player_manager
+  (1)uid->player 玩家uid到玩家映射管理, 在game_server这玩家连接到服务器，断开服务器连接等都进行管理
+
+6)游戏如何开始?
+  (1)加入桌子一个玩家,就进行一次判断,满了则开始
+  (2)玩家打一张牌,则查找所在的桌子等信息,把消息派发给桌子里面的函数进行处理
+  (3)处理完，则接着发牌，将出牌权限等转移给另外一个人,直到游戏完成
+  (4)删除桌子,各种manager进行状态清理
