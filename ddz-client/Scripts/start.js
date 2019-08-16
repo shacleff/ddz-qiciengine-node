@@ -1,7 +1,7 @@
 // 定义本工程的名字空间
 qc.landlord = {};
 
-// 用来存放所有的全局数据（函数、变量等）
+// window全局函数，变量等
 window.G = qc.landlord.G = {};
 
 // 初始化逻辑
