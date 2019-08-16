@@ -1,6 +1,4 @@
-/**
- * 离线玩家管理
- */
+// 离线玩家管理
 
 var OfflinePlayerMgr = function () {
     this.offlineList = [];

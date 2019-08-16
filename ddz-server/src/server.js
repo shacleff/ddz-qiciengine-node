@@ -16,14 +16,15 @@ var deskMgr = new DeskMgr(); // 桌子管理器,存储所有的桌子、分配�
 var cardMgr = new CardMgr(); // 负责为桌子发牌之类的,只提供一些方法，不存储数据
 
 var port = 8081;
+
 server.listen(port, function () {
-    console.log('斗地主服务开启，port =', port);
+    console.log('斗地主服务开启,port =', port);
 });
 
 var handler = { // 游戏逻辑处理
-    someOneExit: function (player, socket) {
-        var self = this,
-            deskNo = player ? player.deskNo : null;
+    someOneExit: function (player, socket) { // 有人断开连接
+        var self = this;
+        var deskNo = player ? player.deskNo : null; // 从player取得玩家的桌子号,避免复杂的查找
         if (deskNo) {
             var desk = deskMgr.desks[deskNo];
             resultData = desk.playerExit(player);
@@ -42,12 +43,14 @@ var handler = { // 游戏逻辑处理
             } else if (desk.status === util.DESK_STATUS_ROB) {
                 desk.status = util.DESK_STATUS_READY;
                 socket.broadcast.to(deskNo).emit('forceExit', resultData);
+
             } else if (desk.status === util.DESK_STATUS_PLAY) {
                 if (desk.onlineSize() === 0) {//本桌已没有人在线，清除
                     desk.onDestroy();
                     deskMgr.deleteDesk(deskNo);
                 } else {
                     socket.broadcast.to(deskNo).emit('forceExit', resultData);
+
                     //延迟出牌，等待玩家回来
                     if (desk.currentPlaySeatNo === player.seatNo) {
                         desk.seats[player.seatNo].timer = setTimeout(function () {
@@ -60,7 +63,7 @@ var handler = { // 游戏逻辑处理
         }
     },
 
-    play: function (data) {
+    play: function (data) { // 玩家出牌
         var self = this;
         var desk = deskMgr.desks[data.deskNo];
         var next = deskMgr.nextSeatNo(data.seatNo);
@@ -109,12 +112,14 @@ var handler = { // 游戏逻辑处理
             }, 20000);
         }
     },
-    aiPlay: function (player, desk) {
+
+    aiPlay: function (player, desk) { // ai出牌
         var p = desk.seats[player.seatNo];
         if (desk.currentPlaySeatNo === player.seatNo) {
-            var ai = new AILogic(player),
-                result = null;
+            var ai = new AILogic(player);
+            var result = null;
             desk.setCardsCnt(player);
+
             if (desk.winCard) {
                 result = ai.follow(
                     desk.winCard,
@@ -123,11 +128,13 @@ var handler = { // 游戏逻辑处理
             } else {
                 result = ai.play(desk.seats[desk.landlordSeatNo].cardList.length);
             }
+
             this.play({
                 'deskNo': player.deskNo,
                 'seatNo': player.seatNo,
                 'cardInfo': result
             });
+
             if (result) {
                 player.subCards(result.cardList);
             }
@@ -143,8 +150,8 @@ io.sockets.on('connection', function (socket) {
 
     socket.on('register', function (data) { //注册
         playerScoreDao.queryByName(data.name).then(function (r) {
-            var flag = r.length > 0,
-                result = {};
+            var flag = r.length > 0;
+            var result = {};
             if (r.length === 0) {
                 result.uid = new UUID().id;
                 result.name = data.name;
@@ -165,6 +172,7 @@ io.sockets.on('connection', function (socket) {
             socket.join(player.deskNo);
             var seats = deskMgr.deskInfo(player);
             var resultData = {'ownSeatNo': player.seatNo};
+
             //是断线重连需要返回底牌信息
             if (deskMgr.desks[player.deskNo].status === util.DESK_STATUS_PLAY) {
                 resultData.desk = deskMgr.desks[player.deskNo];
@@ -175,6 +183,7 @@ io.sockets.on('connection', function (socket) {
                 //给该桌其它玩家广播信息
                 socket.broadcast.to(player.deskNo).emit('deskUpdate', deskMgr.desks[player.deskNo].seats);
             }
+
             //给玩家桌位信息
             socket.emit('joinResult', resultData);
         });
@@ -184,8 +193,10 @@ io.sockets.on('connection', function (socket) {
     socket.on('toggleReady', function (data) {
         console.info(data.deskNo, '桌', data.seatNo, data.isReady ? '准备' : '取消准备');
         deskMgr.desks[data.deskNo].seats[data.seatNo].isReady = data.isReady;
+
         //通知其他玩家有人改变准备状态
         socket.broadcast.to(data.deskNo).emit('noticeReady', data);
+
         //本桌所有人都准备了开始游戏
         if (deskMgr.desks[data.deskNo].isAllReady()) {
             cardMgr.dealCards(deskMgr.desks[data.deskNo]);
@@ -202,13 +213,12 @@ io.sockets.on('connection', function (socket) {
                 };
                 io.sockets.in(socketId).emit('start', data);
             }
-            //io.sockets.in(data.deskNo).emit('start', {msg: '可以开始了'});
         }
     });
 
     //轮换抢地主
     socket.on('robLandlord', function (data) {
-        var desk = deskMgr.desks[data.deskNo];
+        var desk = deskMgr.desks[data.deskNo]; // 哪个桌子
 
         var setLandlord = function () {
             var info = {
@@ -221,7 +231,7 @@ io.sockets.on('connection', function (socket) {
             desk.setLandlord();
             io.sockets.in(data.deskNo).emit('setLandlord', info);
         };
-        //desk.robRound ++;
+
         if (data.robScore < 4) {
             desk.currentScore = data.robScore;
             desk.landlordSeatNo = data.seatNo;
@@ -230,6 +240,7 @@ io.sockets.on('connection', function (socket) {
                 return;
             }
         }
+
         if (++desk.robRound >= 3) {//已经3轮结束抢地主
             if (desk.landlordSeatNo) {
                 setLandlord();
